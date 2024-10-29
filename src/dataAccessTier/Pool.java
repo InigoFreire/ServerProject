@@ -6,6 +6,10 @@ import java.util.ResourceBundle;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 
+/**
+ *
+ * @author Ander
+ */
 public class Pool {
 
     private static BasicDataSource ds = null;

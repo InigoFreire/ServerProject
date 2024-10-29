@@ -21,7 +21,7 @@ public class DAO {
 
     private Connection connection = null;
 
-    public void signUp(User user) throws SQLException {
+    public User signUp(User user) throws SQLException {
         boolean estado = false;
         PreparedStatement stmtPartner = null;
         PreparedStatement stmtUser = null;
@@ -31,14 +31,14 @@ public class DAO {
         String insertPartner = "INSERT INTO res_partner(company_id, name, street, city, zip, email) VALUES "
                 + "(1, ?, ?, ?, ?, ?);";
         String insertUser = "INSERT INTO res_users(company_id, parner_id, login, password, active, notification_type) VALUES "
-                + "(?, ?, ?, ?, ?, ?);";
+                + "(1, ?, ?, ?, ?, email);";
 
         try {
             // Le indicamos el inicio de la transacción
             connection.setAutoCommit(false);
 
             // Preparo el statement de partner para prevenir inyecciones maliciosas
-            stmtPartner = connection.prepareStatement(insertPartner);
+            stmtPartner = connection.prepareStatement(insertPartner, Statement.RETURN_GENERATED_KEYS);
 
             // Le paso los datos
             stmtPartner.setString(1, user.getName());
@@ -50,17 +50,24 @@ public class DAO {
             // Ejecuto la actualización de la base de datos
             stmtPartner.executeUpdate();
 
+            // Obtener el ID generado
+            ResultSet generatedKeys = stmtPartner.getGeneratedKeys();
+            int partnerId = 0;
+            if (generatedKeys.next()) {
+                // Obtener el primer campo de la clave generada
+                partnerId = generatedKeys.getInt(1);
+            }
+
             // Preparo el statement de users
             stmtUser = connection.prepareStatement(insertUser);
 
             // Le paso los datos
-            // Falta poner bien los datos
-            stmtUser.setString(1, user.getName());
-            stmtUser.setString(2, user.getStreet());
-            stmtUser.setString(3, user.getCity());
-            stmtUser.setString(4, user.getZip());
-            stmtUser.setString(5, user.getEmail());
-            stmtUser.setString(6, user.getCity());
+            // El primero siempre 1
+            stmtUser.setInt(1, partnerId);
+            stmtUser.setString(2, user.getEmail());
+            stmtUser.setString(3, user.getPassword());
+            stmtUser.setBoolean(4, user.isActive());
+            // El último siempre email
 
             // Ejecuto la actualización de la base de datos
             stmtUser.executeUpdate();
@@ -91,16 +98,18 @@ public class DAO {
                 connection.close();
             }
         }
+        return user;
     }
 
     public User signIn(User user) throws SQLException {
         PreparedStatement stmt = null;
         ResultSet rs = null;
-
-        String selectUser = "";
         
+        String selectUserData = "SELECT login, password, active FROM res_users ";
+        String selectPartnerData = "SELECT name, street, city, zip FROM res_partner";
+
         try {
-            stmt = connection.prepareStatement(selectUser);
+            stmt = connection.prepareStatement(selectUserData);
             rs = stmt.executeQuery();
 
             if (rs.next()) {

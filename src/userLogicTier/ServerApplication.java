@@ -3,19 +3,25 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package dataAccessTier;
+package userLogicTier;
 
 /**
  *
  * @author inifr
  */
 public class ServerApplication {
-
-    /**
-     * @param args the command line arguments
-     */
+    
+    private int threadCounter = 0;
+    
     public static void main(String[] args) {
-        // TODO code application logic here
+        
     }
     
+    public sinchronized int threadCounterUpwards(){
+        threadCounter++;
+    }
+    
+    public sinchronized int threadCounterDownwards(){
+        threadCounter--;
+    }
 }

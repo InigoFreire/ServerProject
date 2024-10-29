@@ -11,14 +11,16 @@ public class Pool {
     private static BasicDataSource ds = null;
     private static String username;
     private static String password;
+    private static String url;
 
     // Asigna el usuario y contraseña desde el archivo de propiedades para entrar a la base de datos
     public static void getDatabaseCredentials() {
         ResourceBundle configFile;
         // Ruta de archivo de propiedades
-        configFile = ResourceBundle.getBundle("paquete.NombreArchivo");
+        configFile = ResourceBundle.getBundle("resources.Config");
         username = configFile.getString("USERNAME");
         password = configFile.getString("PASSWORD");
+        url = configFile.getString("URL");
     }
 
     //Este método crea y configura el pool de conexiones si aún no ha sido inicializado (ds == null)
@@ -27,11 +29,9 @@ public class Pool {
             ds = new BasicDataSource();
             // Define el controlador JDBC para PostgreSQL
             ds.setDriverClassName("org.postgresql.Driver");
-            // Cambia el usuario y contraseña según tu configuración
             ds.setUsername(username);
             ds.setPassword(password);
-            // La URL de conexión para PostgreSQL, que incluye la ubicación del servidor (192.168.13.130), el puerto (5432), y el nombre de la base de datos (tets)
-            ds.setUrl("jdbc:postgresql://192.168.13.130:5432/test");
+            ds.setUrl(url);
             // Número de conexiones iniciales en el pool cuando se crea
             ds.setInitialSize(10);
             // Número máximo de conexiones que pueden quedar ociosas en el pool sin ser cerradas (ociosas: abiertas sin actividad)

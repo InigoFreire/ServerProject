@@ -60,4 +60,11 @@ public class ServerApplication {
     private synchronized void decrementarContadorHilos() {
         contadorHilos--;
     }
+    
+    public boolean lectorTeclado(){
+    HiloLector hilolector= new HiloLector()
+            
+    new Thread(hilolector).start(););
+            
+            }
 }

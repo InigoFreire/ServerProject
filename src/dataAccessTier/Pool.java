@@ -5,12 +5,13 @@ import java.sql.SQLException;
 import java.util.ResourceBundle;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
+import serverLogicTier.IClosable;
 
 /**
  *
  * @author Ander
  */
-public class Pool {
+public class Pool implements IClosable {
 
     private static BasicDataSource ds = null;
     private static String username;
@@ -53,5 +54,13 @@ public class Pool {
         // La conexión que se devuelve es del tipo Connection, lista para ser usada en operaciones de base de datos
         // Si no hay conexiones disponibles en el pool y se alcanza el tiempo de espera (MaxWaitMillis), lanzará una excepción SQLException
         return getDataSource().getConnection();
+    }
+
+    @Override
+    public void close() throws SQLException {
+        if (ds != null) {
+            // Cierra el pool y libera todas las conexiones
+            ds.close();
+        }
     }
 }

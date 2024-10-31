@@ -22,6 +22,8 @@ public class HiloLector {
             String input = scanner.nextLine();
             if (input.equalsIgnoreCase("close")) {
                 closed = true;
+                
+                while (!contadorHilos =0)
                 System.out.println("Comando 'close' detectado. Saliendo...");
             } else {
                 System.out.println("Comando ingresado: " + input);

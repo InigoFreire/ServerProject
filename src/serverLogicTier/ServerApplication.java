@@ -13,11 +13,9 @@ import userLogicTier.model.User;
 public class ServerApplication extends Thread{
 
     private static final int PUERTO = 5000;
-    private static final int MAX_HILOS = 10;
+    private static final int MAX_HILOS = 10; 
+    public volatile Integer contadorHilos = 0; 
     
-    private volatile boolean esc = false; 
-    private Integer contadorHilos = 0; 
-    private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     public static void main(String[] args) {
         ServerApplication server = new ServerApplication();
@@ -26,37 +24,34 @@ public class ServerApplication extends Thread{
 
     public void iniciar() {
         try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
-            logger.log(Level.INFO, "Servidor iniciado en el puerto {0}", PUERTO);
-
+         
           
             while (!lectorTeclado()) {
                 if (contadorHilos < MAX_HILOS) { 
                    
                     Socket clienteSocket = serverSocket.accept();
-                    logger.log(Level.INFO, "Cliente conectado: {0}", clienteSocket.getInetAddress());
+                    
                     
                     WorkThread worker = new WorkThread(clienteSocket);
                     new Thread(worker).start();
 
                  
                     incrementarContadorHilos();
-                } else {
-                    logger.log(Level.INFO, "Número máximo de conexiones alcanzado. Rechazando nuevas conexiones.");
+                } else {                    
                     Thread.sleep(1000); 
                 }
             }
         } catch (IOException | InterruptedException e) {
-            logger.log(Level.SEVERE, "Error en el servidor: {0}", e.getMessage());
+            
         }
     }
 
-
-    private synchronized void incrementarContadorHilos() {
+    public synchronized void incrementarContadorHilos() {
         contadorHilos++;
     }
 
     
-    private synchronized void decrementarContadorHilos() {
+    public synchronized void decrementarContadorHilos() {
         contadorHilos--;
     }
     

@@ -1,4 +1,4 @@
-package userLogicTier;
+package serverLogicTier;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

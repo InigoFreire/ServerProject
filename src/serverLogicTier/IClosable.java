@@ -3,4 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package userLogicTier;
+package serverLogicTier;
+
+/**
+ *
+ * @author Aitziber
+ */
+public interface IClosable {
+    
+    public void close() throws Exception;
+    
+}

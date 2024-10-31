@@ -10,13 +10,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import userLogicTier.model.User;
 
-public class ServerApplication extends Thread{
+
+
+public class ServerApplication extends Thread {
 
     private static final int PUERTO = 5000;
     private static final int MAX_HILOS = 10; 
     public volatile Integer contadorHilos = 0; 
     
-
     public static void main(String[] args) {
         ServerApplication server = new ServerApplication();
         server.iniciar();
@@ -24,18 +25,13 @@ public class ServerApplication extends Thread{
 
     public void iniciar() {
         try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
-         
-          
             while (!lectorTeclado()) {
-                if (contadorHilos < MAX_HILOS) { 
-                   
+                if (contadorHilos < MAX_HILOS) {
+
                     Socket clienteSocket = serverSocket.accept();
-                    
-                    
                     WorkThread worker = new WorkThread(clienteSocket);
                     new Thread(worker).start();
 
-                 
                     incrementarContadorHilos();
                 } else {                    
                     Thread.sleep(1000); 
@@ -54,13 +50,13 @@ public class ServerApplication extends Thread{
     public synchronized void decrementarContadorHilos() {
         contadorHilos--;
     }
-    
-    public boolean lectorTeclado(){
-    HiloLector hilolector= new HiloLector();
-            
-    new Thread(hilolector).start();
-    
-    return hilolector.isClosed();
-           
-            }
+
+    public boolean lectorTeclado() {
+        HiloLector hilolector = new HiloLector();
+
+        new Thread(hilolector).start();
+
+        return hilolector.isClosed();
+
+    }
 }

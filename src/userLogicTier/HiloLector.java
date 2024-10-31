@@ -9,19 +9,16 @@ import java.util.Scanner;
 
 public class HiloLector {
     
-    private boolean closed = false; // Variable para indicar si el hilo debe terminar
+    private boolean closed = false; 
 
     public HiloLector() {
     }
 
-    
-    
-    // Método que lee la entrada del usuario y devuelve true cuando se introduce "close"
-    public boolean lectorTeclado() {
+    public boolean lectorTecladoHilo() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Ingrese un comando (escriba 'close' para salir): ");
 
-        while (!closed) { // Continua el bucle hasta que se introduzca "close"
+        while (!closed) { 
             String input = scanner.nextLine();
             if (input.equalsIgnoreCase("close")) {
                 closed = true;
@@ -31,14 +28,16 @@ public class HiloLector {
             }
         }
         
-        scanner.close(); // Cierra el Scanner cuando termina el bucle
-        return closed; // Devuelve true cuando se introduce "close"
+        scanner.close(); 
+        return closed; 
     }
 
-    // Método para obtener el estado de cerrado
+   
     public boolean isClosed() {
         return closed;
     }
+
+
 }
 
     

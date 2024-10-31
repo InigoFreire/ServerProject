@@ -10,13 +10,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import userLogicTier.model.User;
 
-public class ServerApplication {
+public class ServerApplication extends Thread{
 
     private static final int PUERTO = 5000;
-    private static final int MAX_HILOS = 10; // Máximo de hilos permitidos
+    private static final int MAX_HILOS = 10;
     
-    private volatile boolean esc = false; // Control de finalización del servidor
-    private Integer contadorHilos = 0; // Contador de hilos
+    private volatile boolean esc = false; 
+    private Integer contadorHilos = 0; 
     private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     public static void main(String[] args) {
@@ -28,22 +28,21 @@ public class ServerApplication {
         try (ServerSocket serverSocket = new ServerSocket(PUERTO)) {
             logger.log(Level.INFO, "Servidor iniciado en el puerto {0}", PUERTO);
 
-            // Bucle principal para aceptar conexiones
-            while (!esc) {
-                if (contadorHilos < MAX_HILOS) { // Limita la creación de nuevos hilos
-                    // Acepta la conexión del cliente
+          
+            while (!lectorTeclado()) {
+                if (contadorHilos < MAX_HILOS) { 
+                   
                     Socket clienteSocket = serverSocket.accept();
                     logger.log(Level.INFO, "Cliente conectado: {0}", clienteSocket.getInetAddress());
-
-                    // Crea y lanza un nuevo hilo worker
+                    
                     WorkThread worker = new WorkThread(clienteSocket);
                     new Thread(worker).start();
 
-                    // Incrementa el contador de hilos
+                 
                     incrementarContadorHilos();
                 } else {
                     logger.log(Level.INFO, "Número máximo de conexiones alcanzado. Rechazando nuevas conexiones.");
-                    Thread.sleep(1000); // Espera antes de intentar aceptar nuevas conexiones
+                    Thread.sleep(1000); 
                 }
             }
         } catch (IOException | InterruptedException e) {
@@ -51,20 +50,22 @@ public class ServerApplication {
         }
     }
 
-    // Método synchronized para incrementar el contador de hilos
+
     private synchronized void incrementarContadorHilos() {
         contadorHilos++;
     }
 
-    // Método synchronized para decrementar el contador de hilos
+    
     private synchronized void decrementarContadorHilos() {
         contadorHilos--;
     }
     
     public boolean lectorTeclado(){
-    HiloLector hilolector= new HiloLector()
+    HiloLector hilolector= new HiloLector();
             
-    new Thread(hilolector).start(););
-            
+    new Thread(hilolector).start();
+    
+    return hilolector.isClosed();
+           
             }
 }

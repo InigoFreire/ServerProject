@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,11 +26,11 @@ public class WorkThread implements Runnable { //implements Signable {
 
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
-    private final ServerSocket socket;
+    private final Socket socket;
     private ServerApplication serverApplication;
     private static final Logger logger = Logger.getLogger(WorkThread.class.getName());
 
-    public WorkThread(ServerSocket socketInput) {
+    public WorkThread(Socket socketInput) {
         this.socket = socketInput;
     }
 

@@ -1,22 +1,28 @@
 package serverLogicTier;
 
+import dataAccessTier.Pool;
+import dataAccessTier.WorkThread;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import userLogicTier.model.User;
-
+/**
+ *
+ * @author Pebble
+ */
 
 
 public class ServerApplication extends Thread {
 
     private static final int PUERTO = 5000;
     private static final int MAX_HILOS = 10; 
-    public volatile Integer contadorHilos = 0; 
+    public static Integer contadorHilos = 0; 
     
     public static void main(String[] args) {
         ServerApplication server = new ServerApplication();
@@ -32,7 +38,7 @@ public class ServerApplication extends Thread {
                     WorkThread worker = new WorkThread(clienteSocket);
                     new Thread(worker).start();
 
-                    incrementarContadorHilos();
+                    threadCounterUpwards();
                 } else {                    
                     Thread.sleep(1000); 
                 }
@@ -42,21 +48,23 @@ public class ServerApplication extends Thread {
         }
     }
 
-    public synchronized void incrementarContadorHilos() {
+    public synchronized void threadCounterUpwards() {
         contadorHilos++;
     }
 
     
-    public synchronized void decrementarContadorHilos() {
+    public synchronized void threadCounterDownwards() {
         contadorHilos--;
     }
 
     public boolean lectorTeclado() {
         HiloLector hilolector = new HiloLector();
 
-        new Thread(hilolector).start();
+        new Thread((Runnable) hilolector).start();
 
         return hilolector.isClosed();
 
     }
+    
+
 }

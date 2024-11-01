@@ -3,14 +3,15 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package serverLogicTier;
+package dataAccessTier;
 
 /**
  *
- * @author Aitziber
+ * @author Pebble
  */
-public interface IClosable {
+public class DAOFactory {
     
-    public void close() throws Exception;
+    public static DAO getDAO(){
+     return new DAO();}
     
 }

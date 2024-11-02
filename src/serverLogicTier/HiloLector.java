@@ -4,8 +4,13 @@
  * and open the template in the editor.
  */
 package serverLogicTier;
+import dataAccessTier.Pool;
+import java.sql.SQLException;
 import java.util.Scanner;
-
+/**
+ *
+ * @author Pebble
+ */
 
 public class HiloLector {
     
@@ -14,7 +19,7 @@ public class HiloLector {
     public HiloLector() {
     }
 
-    public boolean lectorTecladoHilo() {
+    public boolean lectorTecladoHilo() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Ingrese un comando (escriba 'close' para salir): ");
 
@@ -22,20 +27,16 @@ public class HiloLector {
             String input = scanner.nextLine();
             if (input.equalsIgnoreCase("close")) {
                 closed = true;
-                
-                while (!contadorHilos =0)
-                System.out.println("Comando 'close' detectado. Saliendo...");
-            } else {
-                System.out.println("Comando ingresado: " + input);
-            }
-        }
-        
+                    Pool.close();
+        }     
         scanner.close(); 
         return closed; 
     }
 
    
     public boolean isClosed() {
+        boolean closed = false;
+        
         return closed;
     }
 

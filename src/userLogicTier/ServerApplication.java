@@ -5,23 +5,40 @@
  */
 package userLogicTier;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
- * @author inifr
+ * @author InigoFreire
  */
 public class ServerApplication {
     
-    private int threadCounter = 0;
-    
+    private ServerSocket socket;
+    private static final ResourceBundle configFile = ResourceBundle.getBundle("config.properties");
+    private static final int maxConnections = Integer.parseInt(ResourceBundle.getBundle("config.properties").getString("maxConnections"));
+    private static int connections = 0;
+
+    /**
+     *
+     * @param args
+     */
     public static void main(String[] args) {
-        
+        ServerApplication server = new ServerApplication();
+        server.startServer();
     }
     
-    public sinchronized int threadCounterUpwards(){
-        threadCounter++;
-    }
-    
-    public sinchronized int threadCounterDownwards(){
-        threadCounter--;
+    public void startServer(){
+        try {
+            int port = Integer.parseInt(configFile.getString("PORT"));
+            
+            
+            
+        }catch (IOException e){
+            Logger.getLogger(ServerApplication.class.getName()).log(Level.SEVERE, null, e);
+        }
     }
 }

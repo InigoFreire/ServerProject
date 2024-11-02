@@ -16,15 +16,17 @@ public class Pool {
     private static String username;
     private static String password;
     private static String url;
+    private static int userCap;
 
     // Asigna el usuario y contraseña desde el archivo de propiedades para entrar a la base de datos
     public static void getDatabaseCredentials() {
         ResourceBundle configFile;
         // Ruta de archivo de propiedades
-        configFile = ResourceBundle.getBundle("resources.Config");
+        configFile = ResourceBundle.getBundle("resources.config");
         username = configFile.getString("USERNAME");
         password = configFile.getString("PASSWORD");
         url = configFile.getString("URL");
+        userCap = Integer.parseInt(configFile.getString("USER_CAP"));
     }
 
     //Este método crea y configura el pool de conexiones si aún no ha sido inicializado (ds == null)
@@ -41,7 +43,7 @@ public class Pool {
             // Número máximo de conexiones que pueden quedar ociosas en el pool sin ser cerradas (ociosas: abiertas sin actividad)
             ds.setMaxIdle(10);
             // Número total máximo de conexiones abiertas que puede manejar el pool
-            ds.setMaxTotal(20);
+            ds.setMaxTotal(userCap);
             // Tiempo máximo en milisegundos que un hilo puede esperar para obtener una conexión antes de lanzar una excepción (-1 espera de manera ilimitada)
             ds.setMaxWaitMillis(10000);
         }

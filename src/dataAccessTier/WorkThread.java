@@ -8,27 +8,22 @@ package dataAccessTier;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import message.Message;
 import message.MessageType;
 import serverLogicTier.ServerApplication;
-
 import userLogicTier.model.User;
 /**
  *
- * @author inifr
+ * @author InigoFreire
  */
-public class WorkThread implements Runnable { //implements Signable {
-
-    private ObjectOutputStream oos;
-    private ObjectInputStream ois;
+public class WorkThread implements Runnable { 
+    private ObjectInputStream reader;
+    private  ObjectOutputStream writer;
     private final Socket socket;
-    private ServerApplication serverApplication;
-    private static final Logger logger = Logger.getLogger(WorkThread.class.getName());
+    private Logger logger = Logger.getLogger(WorkThread.class.getName());
 
     public WorkThread(Socket socketInput) {
         this.socket = socketInput;
@@ -37,45 +32,63 @@ public class WorkThread implements Runnable { //implements Signable {
     @Override
     public void run() {
         try {
+            reader = new ObjectInputStream(socket.getInputStream());
+            writer = new ObjectOutputStream(socket.getOutputStream());            
+
             // Reads client's message
-            Message message = (Message) ois.readObject();
-            logger.log(Level.INFO, "Client side message received", message.getMessageType());
+            Message message = (Message) reader.readObject();
+            logger.log(Level.INFO, "Client message received", message.getMessageType());
 
             // Filters the message so it gets a response
-            Message response = filterMessage(message);
+            Message response = handleMessage(message);
 
             // Sends the response back to the client
-            oos.writeObject(response);
+            writer.writeObject(response);
+            logger.log(Level.INFO, "Response sent to client", response.getMessageType());
 
         } catch (IOException | ClassNotFoundException e) {
-            logger.log(Level.SEVERE, e.getMessage());
+            logger.log(Level.SEVERE, "Client handling error", e.getMessage());
         } finally {
             try {
+                socket.close();
                 socket.close();
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while closing the socket", e.getMessage());
             }
-            serverApplication.threadCounterDownwards();
         }
     }
 
-    private Message filterMessage(Message message) {
+    private Message handleMessage(Message message) {
         Message response = new Message(null, MessageType.SERVER_RESPONSE_DENIED);
 
-        if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
-            User usuario = message.getUser();
-            if (registrarUsuarioEnBaseDeDatos(usuario)) {
-                response = new Message(usuario, MessageType.SERVER_RESPONSE_OK);
-            } else {
-                response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+        try{
+            if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
+                User user = message.getUser();
+                // TODO Llamar al la factoria del dao que llama al metodo que registra y devuelve un usuario
+                if (RegisterUserIntoDatabase(user)) {
+                    response = new Message(user, MessageType.SERVER_RESPONSE_OK);
+                } else {
+                    response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+                }
+            } else if (message.getMessageType() == MessageType.SERVER_SIGN_IN_REQUEST) {
+                User usuario = message.getUser();
+                // TODO Lo mismo que arriba
+                if (VerifyUserCredentials(usuario)) {
+                    response = new Message(usuario, MessageType.SERVER_RESPONSE_OK);
+                } else {
+                    response = new Message(null, MessageType.SERVER_CREDENTIAL_ERROR);
+                }
             }
-        } else if (message.getMessageType() == MessageType.SERVER_SIGN_IN_REQUEST) {
-            User usuario = message.getUser();
-            if (verificarCredencialesEnBaseDeDatos(usuario)) {
-                response = new Message(usuario, MessageType.SERVER_RESPONSE_OK);
-            } else {
-                response = new Message(null, MessageType.SERVER_CREDENTIAL_ERROR);
-            }
+            
+        //TODO cambiar los nombres de las excepciones e importarlas
+        }catch (ConnectionErrorException e){
+            response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
+        }catch (UserCapReachedException e){
+            response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
+        }catch (UserAlreadyExistsException e){
+            response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+        }catch (CredentialErrorException e){
+            response = new Message(null, MessageType.SERVER_CREDENTIAL_ERROR);
         }
         return response;
     }

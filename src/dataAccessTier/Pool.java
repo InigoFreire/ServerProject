@@ -54,4 +54,11 @@ public class Pool {
         // Si no hay conexiones disponibles en el pool y se alcanza el tiempo de espera (MaxWaitMillis), lanzará una excepción SQLException
         return getDataSource().getConnection();
     }
+
+    public static void close() throws SQLException {
+        if (ds != null) {
+            // Cierra el pool y libera todas las conexiones
+            ds.close();
+        }
+    }
 }

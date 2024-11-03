@@ -69,28 +69,38 @@ public class WorkThread implements Runnable {
         try{
             if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
                 User user = message.getUser();
+                logger.log(Level.WARNING, "Sign up request received", message.getMessageType());
                 if (DAOFactory.getDAO().signUp(user) != null) {
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
+                    logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {
                     response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+                    logger.log(Level.WARNING, "Server response ERROR -> User already exists", message.getMessageType());
                 }
             } else if (message.getMessageType() == MessageType.SERVER_SIGN_IN_REQUEST) {
                 User user = message.getUser();
+                logger.log(Level.WARNING, "Sign in request received", message.getMessageType());
                 if (DAOFactory.getDAO().signIn(user) != null) {
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
+                    logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {
                     response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
+                    logger.log(Level.WARNING, "Server response ERROR -> User credential error", message.getMessageType());
                 }
             }
             //TODO ASK THIS -> Is this OK? (Logically, can the exceptions be launched here??) <- ASK THIS
         }catch (ServerException e){
             response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
+            logger.log(Level.WARNING, "Server response ERROR -> Connection error", e.getMessage());
         }catch (UserCapException e){
             response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
+            logger.log(Level.WARNING, "Server response ERROR -> User cap reached", e.getMessage());
         }catch (ExistingUserException e){
             response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+            logger.log(Level.WARNING, "Server response ERROR -> User already exists", e.getMessage());
         }catch (UserCredentialException e){
             response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
+            logger.log(Level.WARNING, "Server response ERROR -> User credential error", e.getMessage());
         }
         return response;
     }

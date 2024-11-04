@@ -5,6 +5,11 @@
  */
 package dataAccessTier;
 
+import exceptions.ExistingUserException;
+import exceptions.InactiveUserException;
+import exceptions.ServerException;
+import exceptions.UserCapException;
+import exceptions.UserCredentialException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -48,47 +53,54 @@ public class WorkThread implements Runnable {
 
         } catch (IOException | ClassNotFoundException e) {
             logger.log(Level.SEVERE, "Client handling error", e.getMessage());
+        } catch (InactiveUserException e) {
+            logger.log(Level.SEVERE, "User inactive", e.getMessage());
         } finally {
             try {
                 socket.close();
-                socket.close();
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Error while closing the socket", e.getMessage());
+                logger.log(Level.SEVERE, "Error while closing the socket", e.getMessage());
             }
         }
     }
 
-    private Message handleMessage(Message message) {
+    private Message handleMessage(Message message) throws InactiveUserException {
         Message response = new Message(null, MessageType.SERVER_RESPONSE_DENIED);
-
         try{
             if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
                 User user = message.getUser();
-                // TODO Llamar al la factoria del dao que llama al metodo que registra y devuelve un usuario
-                if (RegisterUserIntoDatabase(user)) {
+                logger.log(Level.WARNING, "Sign up request received", message.getMessageType());
+                if (DAOFactory.getDAO().signUp(user) != null) {
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
+                    logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {
                     response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
+                    logger.log(Level.WARNING, "Server response ERROR -> User already exists", message.getMessageType());
                 }
             } else if (message.getMessageType() == MessageType.SERVER_SIGN_IN_REQUEST) {
-                User usuario = message.getUser();
-                // TODO Lo mismo que arriba
-                if (VerifyUserCredentials(usuario)) {
-                    response = new Message(usuario, MessageType.SERVER_RESPONSE_OK);
+                User user = message.getUser();
+                logger.log(Level.WARNING, "Sign in request received", message.getMessageType());
+                if (DAOFactory.getDAO().signIn(user) != null) {
+                    response = new Message(user, MessageType.SERVER_RESPONSE_OK);
+                    logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {
-                    response = new Message(null, MessageType.SERVER_CREDENTIAL_ERROR);
+                    response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
+                    logger.log(Level.WARNING, "Server response ERROR -> User credential error", message.getMessageType());
                 }
             }
-            
-        //TODO cambiar los nombres de las excepciones e importarlas
-        }catch (ConnectionErrorException e){
+            //TODO ASK THIS -> Is this OK? (Logically, can the exceptions be launched here??) <- ASK THIS
+        }catch (ServerException e){
             response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
-        }catch (UserCapReachedException e){
+            logger.log(Level.WARNING, "Server response ERROR -> Connection error", e.getMessage());
+        }catch (UserCapException e){
             response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
-        }catch (UserAlreadyExistsException e){
+            logger.log(Level.WARNING, "Server response ERROR -> User cap reached", e.getMessage());
+        }catch (ExistingUserException e){
             response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
-        }catch (CredentialErrorException e){
-            response = new Message(null, MessageType.SERVER_CREDENTIAL_ERROR);
+            logger.log(Level.WARNING, "Server response ERROR -> User already exists", e.getMessage());
+        }catch (UserCredentialException e){
+            response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
+            logger.log(Level.WARNING, "Server response ERROR -> User credential error", e.getMessage());
         }
         return response;
     }

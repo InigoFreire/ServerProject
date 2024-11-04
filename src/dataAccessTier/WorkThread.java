@@ -28,6 +28,7 @@ public class WorkThread implements Runnable {
     private ObjectInputStream reader;
     private  ObjectOutputStream writer;
     private final Socket socket;
+    private ServerApplication main;
     private Logger logger = Logger.getLogger(WorkThread.class.getName());
 
     public WorkThread(Socket socketInput) {
@@ -53,18 +54,17 @@ public class WorkThread implements Runnable {
 
         } catch (IOException | ClassNotFoundException e) {
             logger.log(Level.SEVERE, "Client handling error", e.getMessage());
-        } catch (InactiveUserException e) {
-            logger.log(Level.SEVERE, "User inactive", e.getMessage());
         } finally {
             try {
                 socket.close();
+                main.decrementThreadCounter();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Error while closing the socket", e.getMessage());
             }
         }
     }
 
-    private Message handleMessage(Message message) throws InactiveUserException {
+    private Message handleMessage(Message message){
         Message response = new Message(null, MessageType.SERVER_RESPONSE_DENIED);
         try{
             if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
@@ -87,21 +87,36 @@ public class WorkThread implements Runnable {
                     response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
                     logger.log(Level.WARNING, "Server response ERROR -> User credential error", message.getMessageType());
                 }
+            } else {
+                User user = message.getUser();
+                response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
+                logger.log(Level.WARNING, "Server error", message.getMessageType());
             }
-            //TODO ASK THIS -> Is this OK? (Logically, can the exceptions be launched here??) <- ASK THIS
-        }catch (ServerException e){
-            response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
-            logger.log(Level.WARNING, "Server response ERROR -> Connection error", e.getMessage());
-        }catch (UserCapException e){
-            response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
-            logger.log(Level.WARNING, "Server response ERROR -> User cap reached", e.getMessage());
-        }catch (ExistingUserException e){
+        } catch (ExistingUserException e) {
             response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
-            logger.log(Level.WARNING, "Server response ERROR -> User already exists", e.getMessage());
-        }catch (UserCredentialException e){
+            logger.log(Level.WARNING, "SERVER ERROR. User already exists", e.getMessage());
+        } catch (UserCredentialException e) {
             response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
-            logger.log(Level.WARNING, "Server response ERROR -> User credential error", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. User credential error", e.getMessage());
+        } catch (InactiveUserException e) {
+            response = new Message(null, MessageType.SERVER_USER_INACTIVE);
+            logger.log(Level.WARNING, "SERVER ERROR. User inactive", e.getMessage());
+        } catch (UserCapException e) {
+            response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
+            logger.log(Level.WARNING, "SERVER ERROR. User cap reached", e.getMessage());
+        } catch (ServerException e) {
+            response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
+            logger.log(Level.WARNING, "SERVER ERROR. Server connection error", e.getMessage());
         }
         return response;
     }
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
+
 }

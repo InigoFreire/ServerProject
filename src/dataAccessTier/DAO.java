@@ -5,6 +5,9 @@
  */
 package dataAccessTier;
 
+import exceptions.ExistingUserException;
+import exceptions.ServerException;
+import exceptions.UserCredentialException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,7 +25,7 @@ public class DAO implements Signable {
     private Connection connection = null;
 
     @Override
-    public User signUp(User user) throws SQLException {
+    public User signUp(User user) throws SQLException, ServerException {
         PreparedStatement stmtPartner = null;
         PreparedStatement stmtUser = null;
 
@@ -67,7 +70,7 @@ public class DAO implements Signable {
             if (connection != null) {
                 connection.rollback();
             }
-            throw new SQLException("Error en la inserción de datos", e);
+            throw new ServerException("SERVER ERROR. Error en la inserción de datos");
         } finally {
             // Cerrar recursos
             if (stmtPartner != null) {
@@ -84,9 +87,10 @@ public class DAO implements Signable {
     }
 
     @Override
-    public User signIn(User user) throws SQLException {
+    public User signIn(User user) throws SQLException, ServerException, UserCredentialException {
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        String userEmail = user.getEmail();
 
         String selectUserData = "SELECT u.login, u.password, u.active, p.name, p.street, p.city, p.zip "
                 + "FROM res_users u "
@@ -98,7 +102,7 @@ public class DAO implements Signable {
             connection.setAutoCommit(false);
             // Preparar la consulta con parámetros para evitar inyecciones SQL
             stmt = connection.prepareStatement(selectUserData);
-            stmt.setString(1, user.getEmail());
+            stmt.setString(1, userEmail);
             stmt.setString(2, user.getPassword());
 
             // Ejecutar la consulta y obtener los resultados
@@ -117,12 +121,20 @@ public class DAO implements Signable {
                         rs.getBoolean("active")
                 );
             } else {
-                // Si el usuario no existe, devolvemos null o lanzamos una excepción personalizada
+                // Si el usuario no existe, devolvemos null y lanzamos una excepción personalizada
                 user = null;
+                throw new UserCredentialException();
             }
-
+            
             // Confirmar la transacción
             connection.commit();
+
+        } catch (SQLException e) {
+            // Realizar rollback en caso de error
+            if (connection != null) {
+                connection.rollback();
+            }
+            throw new ServerException("SERVER ERROR. Error al buscar el usuario");
         } finally {
             // Cerrar ResultSet y PreparedStatement en el bloque finally
             if (rs != null) {

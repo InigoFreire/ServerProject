@@ -5,13 +5,16 @@
  */
 package dataAccessTier;
 
+import userLogicTier.Signable;
+
 /**
  *
  * @author Pebble
  */
 public class DAOFactory {
     
-    public static DAO getDAO(){
-     return new DAO();}
+    public static Signable getDAO(){
+        return new DAO();
+    }
     
 }

@@ -113,9 +113,11 @@ public class ServerApplication {
                 Thread.sleep(1000); // Wait if max threads reached
             }
         }shutDownServer();
-    } catch (IOException | InterruptedException e)
-    {}finally {
-        shutDownServer(); // Close resources when server stops
+    } catch (IOException | InterruptedException e){
+        
+    }finally {
+        // Close resources when server stops
+        shutDownServer();
     }
 }
 
@@ -123,14 +125,18 @@ public class ServerApplication {
      * Increments the thread counter, which tracks the number of active client threads.
      */
     public synchronized void incrementThreadCounter() {
-        threadCounter++;
+        if (getThreadCounter() < getMaxThreads()){
+            threadCounter++;
+        }
     }
 
     /**
      * Decrements the thread counter, used when a client thread completes its work.
      */
     public synchronized void decrementThreadCounter() {
-        threadCounter--;
+        if (getThreadCounter() > 0){
+            threadCounter--;
+        }
     }
 
 

@@ -72,16 +72,11 @@ public class ServerApplication {
         maxThreads = Integer.parseInt(configFile.getString("MAX_THREADS"));
     }
     
-/**
- * Starts the server, initializes the {@link ServerSocket} and connection pool,
- * and enters the main loop to accept and handle client connections.
- * <p>
- * The server will continue running until {@code isRunning} is set to {@code false}.
- * </p>
- *
- * @throws SQLException if a database access error occurs during pool initialization
- * @throws ServerException if a server-related error occurs while starting or accepting connections
- */
+
+    public void stopRunning() {
+    ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
+    }
+     
 public void startServer() throws SQLException, ServerException {
     try {
         // Initialize ServerSocket and Connection Pool
@@ -102,13 +97,24 @@ public void startServer() throws SQLException, ServerException {
             } else {                    
                 Thread.sleep(1000); // Wait if max threads reached
             }
-        }
+        }shutDownServer();
     } catch (IOException | InterruptedException e)
     {}finally {
         shutDownServer(); // Close resources when server stops
     }
 }
-
+    
+    public void shutDownServer() throws SQLException {
+        isRunning = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close(); // Close the ServerSocket
+            }
+            Pool.close(); // Close the connection pools       
+        } catch (IOException e) {
+            // Exception handling code
+        }
+    }
 
     /**
      * Increments the thread counter, which tracks the number of active client threads.
@@ -124,31 +130,13 @@ public void startServer() throws SQLException, ServerException {
         threadCounter--;
     }
 
-    /**
-     * Shuts down the server by setting {@code isRunning} to {@code false},
-     * closing the {@link ServerSocket}, and releasing resources from the connection pool.
-     *
-     * @throws SQLException if a database access error occurs during pool shutdown
-     */
-    public void shutDownServer() throws SQLException {
-        isRunning = false;
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close(); // Close the ServerSocket
-            }
-            Pool.close(); // Close the connection pools       
-        } catch (IOException e) {
-            // Exception handling code
-        }
-    }
+
 
     /**
      * Stops the server by setting the {@code isRunning} flag to {@code false}.
      * This flag will stop the main loop in {@link #startServer()} and shut down the server.
      */
-    public static void stopRunning() {
-        isRunning = false;
-    }
+
 
     /**
      * Gets the current thread counter value.

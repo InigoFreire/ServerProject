@@ -35,6 +35,9 @@ public class WorkThread implements Runnable {
         this.socket = socketInput;
     }
 
+    /**
+     * 
+     */
     @Override
     public void run() {
         try {
@@ -63,7 +66,24 @@ public class WorkThread implements Runnable {
             }
         }
     }
-
+    /**
+    * Handles the message delivered by both the client (@link userLogicTier.Client) and the server (@link dataAcessTier.DAO).
+    * 
+    * <ul>
+    * <li>
+    * <p>1. Firstly, it receives the message from the client side and extracts the user inside it so it can send to the server side
+    * a message and a user, in order to be used in many operations in the DB.</p> 
+    * </li>
+    * <li>
+    * <p>2. Then, it sends the message to the server and receives the response.</p>
+    * </li>
+    * <li>
+    * <p>3. Finally, Depending on the response received from the server side, sends back a message and a user inside a response object to the client.</p>
+    * </ul> 
+    *
+    * @param message a message with a request from the client side
+    * @return a message containing the ser side response
+    */
     private Message handleMessage(Message message){
         Message response = new Message(null, MessageType.SERVER_RESPONSE_DENIED);
         try{
@@ -110,13 +130,4 @@ public class WorkThread implements Runnable {
         }
         return response;
     }
-
-    public Logger getLogger() {
-        return logger;
-    }
-
-    public void setLogger(Logger logger) {
-        this.logger = logger;
-    }
-
 }

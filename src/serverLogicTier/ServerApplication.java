@@ -67,17 +67,32 @@ public class ServerApplication {
      * Retrieves values for the server port and maximum number of threads.
      */
      public void loadConfig() {
-        ResourceBundle configFile = ResourceBundle.getBundle("config.properties");
+        ResourceBundle configFile = ResourceBundle.getBundle("resources.config");
         port = Integer.parseInt(configFile.getString("PORT"));
         maxThreads = Integer.parseInt(configFile.getString("MAX_THREADS"));
     }
     
 
-    public void stopRunning() {
+    public static void stopRunning() {
     ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
     }
+      
+    
+    public static void shutDownServer() throws SQLException {
+        // Cierra el servidor y los recursos como el socket
+        isRunning = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close(); // Cierra el ServerSocket
+            }
+            Pool.close(); // Cierra las conexiones del pool       
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
      
-public void startServer() throws SQLException, ServerException {
+     
+    public void startServer() throws SQLException, ServerException {
     try {
         // Initialize ServerSocket and Connection Pool
         serverSocket = new ServerSocket(port);
@@ -103,18 +118,6 @@ public void startServer() throws SQLException, ServerException {
         shutDownServer(); // Close resources when server stops
     }
 }
-    
-    public void shutDownServer() throws SQLException {
-        isRunning = false;
-        try {
-            if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close(); // Close the ServerSocket
-            }
-            Pool.close(); // Close the connection pools       
-        } catch (IOException e) {
-            // Exception handling code
-        }
-    }
 
     /**
      * Increments the thread counter, which tracks the number of active client threads.
@@ -129,13 +132,6 @@ public void startServer() throws SQLException, ServerException {
     public synchronized void decrementThreadCounter() {
         threadCounter--;
     }
-
-
-
-    /**
-     * Stops the server by setting the {@code isRunning} flag to {@code false}.
-     * This flag will stop the main loop in {@link #startServer()} and shut down the server.
-     */
 
 
     /**

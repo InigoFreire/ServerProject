@@ -89,9 +89,14 @@ public class DAO implements Signable {
             return user;
 
         } catch (SQLException e) {
-            if (connection != null) connection.rollback();
-            logger.log(Level.SEVERE, "Error en la inserción de datos", ex);
-            throw new ServerException("SERVER ERROR. Error en la inserción de datos");
+            try {
+                if (connection != null) connection.rollback();
+                logger.log(Level.SEVERE, "Error en la inserción de datos", e);
+                throw new ServerException("SERVER ERROR. Error en la inserción de datos");
+            } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "Error en la inserción de datos", ex);
+                throw new ServerException("SERVER ERROR. Error en la inserción de datos");
+            }
         } finally {
             // Cerrar recursos
              try {

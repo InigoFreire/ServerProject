@@ -1,5 +1,6 @@
 package serverLogicTier;
 
+import com.sun.security.auth.login.ConfigFile;
 import dataAccessTier.Pool;
 import dataAccessTier.WorkThread;
 import exceptions.ServerException;
@@ -42,6 +43,7 @@ public class ServerApplication {
     private static int threadCounter = 0; 
     private static ServerSocket serverSocket;
     public static volatile boolean isRunning = true;
+    private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     /**
      * Main entry point for the {@code ServerApplication}.
@@ -51,9 +53,10 @@ public class ServerApplication {
      * @throws SQLException if a database access error occurs
      */
     public static void main(String[] args) throws SQLException {
-        
-            ServerApplication server = new ServerApplication();
-            server.loadConfig();
+        logger.log(Level.INFO, "Server Application started");
+        ServerApplication server = new ServerApplication();
+        server.loadConfig();
+        logger.log(Level.INFO, "Server Application loaded correctly");
         try {
             server.startServer();
         } catch (ServerException e) {
@@ -96,19 +99,25 @@ public class ServerApplication {
     try {
         // Initialize ServerSocket and Connection Pool
         serverSocket = new ServerSocket(port);
+        logger.log(Level.INFO, "Port acquired");
         Pool.getDatabaseCredentials(); // Configure connection pool
+        logger.log(Level.INFO, "Pool credentials acquired");
 
         // Start thread to monitor keyboard input
         Thread inputThread = new Thread(new KeyboardListener());
         inputThread.start();
+        logger.log(Level.INFO, "InputListener thread started");
 
         // Main loop to accept client connections
         while (isRunning) {
             if (threadCounter < maxThreads) {
                 Socket clientSocket = serverSocket.accept();
-                WorkThread worker = new WorkThread(clientSocket);
+                logger.log(Level.INFO, "Incoming socket connection accepted");
+                WorkThread worker = new WorkThread(clientSocket,this);
+                logger.log(Level.INFO, "Worker thread created");
                 new Thread(worker).start();
                 incrementThreadCounter();
+                logger.log(Level.INFO, "Worker count (+1) =", threadCounter);
             } else {                    
                 Thread.sleep(1000); // Wait if max threads reached
             }
@@ -123,14 +132,18 @@ public class ServerApplication {
      * Increments the thread counter, which tracks the number of active client threads.
      */
     public synchronized void incrementThreadCounter() {
-        threadCounter++;
+        if (getThreadCounter() < getMaxThreads()){
+            threadCounter++;
+        }
     }
 
     /**
      * Decrements the thread counter, used when a client thread completes its work.
      */
     public synchronized void decrementThreadCounter() {
-        threadCounter--;
+        if (getThreadCounter() > 0){
+            threadCounter--;
+        }
     }
 
 

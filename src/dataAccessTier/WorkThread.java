@@ -31,8 +31,9 @@ public class WorkThread implements Runnable {
     private ServerApplication main;
     private Logger logger = Logger.getLogger(WorkThread.class.getName());
 
-    public WorkThread(Socket socketInput) {
+    public WorkThread(Socket socketInput, ServerApplication serverApp) {
         this.socket = socketInput;
+        this.main = serverApp;
     }
 
     /**
@@ -43,6 +44,7 @@ public class WorkThread implements Runnable {
         try {
             reader = new ObjectInputStream(socket.getInputStream());
             writer = new ObjectOutputStream(socket.getOutputStream());            
+            logger.log(Level.INFO, "Reader & writer instanced");
 
             // Reads client's message
             Message message = (Message) reader.readObject();
@@ -56,13 +58,13 @@ public class WorkThread implements Runnable {
             logger.log(Level.INFO, "Response sent to client", response.getMessageType());
 
         } catch (IOException | ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Client handling error", e.getMessage());
+            logger.log(Level.SEVERE, "Client handling error", e);
         } finally {
             try {
                 socket.close();
                 main.decrementThreadCounter();
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Error while closing the socket", e.getMessage());
+                logger.log(Level.SEVERE, "Error while closing the socket", e);
             }
         }
     }
@@ -114,19 +116,19 @@ public class WorkThread implements Runnable {
             }
         } catch (ExistingUserException e) {
             response = new Message(null, MessageType.SERVER_USER_ALREADY_EXISTS);
-            logger.log(Level.WARNING, "SERVER ERROR. User already exists", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. User already exists", e);
         } catch (UserCredentialException e) {
             response = new Message(null, MessageType.SERVER_USER_CREDENTIAL_ERROR);
-            logger.log(Level.WARNING, "SERVER ERROR. User credential error", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. User credential error", e);
         } catch (InactiveUserException e) {
             response = new Message(null, MessageType.SERVER_USER_INACTIVE);
-            logger.log(Level.WARNING, "SERVER ERROR. User inactive", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. User inactive", e);
         } catch (UserCapException e) {
             response = new Message(null, MessageType.SERVER_USER_CAP_REACHED);
-            logger.log(Level.WARNING, "SERVER ERROR. User cap reached", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. User cap reached", e);
         } catch (ServerException e) {
             response = new Message(null, MessageType.SERVER_CONNECTION_ERROR);
-            logger.log(Level.WARNING, "SERVER ERROR. Server connection error", e.getMessage());
+            logger.log(Level.WARNING, "SERVER ERROR. Server connection error", e);
         }
         return response;
     }

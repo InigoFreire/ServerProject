@@ -24,8 +24,8 @@ public class Pool {
         ResourceBundle configFile;
         // Ruta de archivo de propiedades
         configFile = ResourceBundle.getBundle("resources.config");
-        username = configFile.getString("USERNAME");
-        password = configFile.getString("PASSWORD");
+        username = configFile.getString("DB_USER");
+        password = configFile.getString("DB_PASSWORD");
         url = configFile.getString("URL");
         userCap = Integer.parseInt(configFile.getString("USER_CAP"));
     }

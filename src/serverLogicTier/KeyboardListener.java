@@ -10,16 +10,20 @@ public class KeyboardListener implements Runnable {
     @Override
     public void run() {
         Scanner scanner = new Scanner(System.in);
-      ServerApplication ServerApplication = new ServerApplication();
-        while (ServerApplication.isRunning) {
+    
+          while (ServerApplication.isRunning) {
             String input = scanner.nextLine();
             if ("close".equalsIgnoreCase(input)) {
-                ServerApplication.stopRunning(); // Notify server to stop
+                ServerApplication.stopRunning(); // Cambia isRunning a false
+                try {
+                    ServerApplication.shutDownServer(); // Cierra los recursos del servidor
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
                 break;
             }
         }
         scanner.close();
-        
     }
     
 

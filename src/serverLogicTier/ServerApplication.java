@@ -62,6 +62,8 @@ public class ServerApplication {
             server.startServer();
         } catch (ServerException e) {
             // Handle ServerException
+        } catch (InterruptedException | IOException ex) {
+            logger.log(Level.INFO, "Server Application started");
         }
     }
 

@@ -51,78 +51,91 @@ public class ServerApplication {
      * @throws SQLException if a database access error occurs
      */
     public static void main(String[] args) throws SQLException {
-        
-            ServerApplication server = new ServerApplication();
-            server.loadConfig();
+        ServerApplication server = new ServerApplication();
+        server.loadConfig();
         try {
             server.startServer();
         } catch (ServerException e) {
-            
+            // Handle ServerException
         }
-        
     }
 
     /**
      * Loads the server configuration from a {@code .properties} file.
      * Retrieves values for the server port and maximum number of threads.
      */
-     public void loadConfig() {
+    public void loadConfig() {
         ResourceBundle configFile = ResourceBundle.getBundle("resources.config");
         port = Integer.parseInt(configFile.getString("PORT"));
         maxThreads = Integer.parseInt(configFile.getString("MAX_THREADS"));
     }
-    
 
+    /**
+     * Stops the server by setting the {@code isRunning} flag to {@code false}.
+     * This flag will stop the main loop in {@link #startServer()} and shut down the server.
+     */
     public static void stopRunning() {
-    ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
+        ServerApplication.isRunning = false;
     }
-      
-    
+
+    /**
+     * Shuts down the server and releases all resources.
+     * Closes the {@code ServerSocket} and connection pool.
+     *
+     * @throws SQLException if a database access error occurs during pool shutdown
+     */
     public static void shutDownServer() throws SQLException {
-        // Cierra el servidor y los recursos como el socket
         isRunning = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close(); // Cierra el ServerSocket
+                serverSocket.close(); // Close the ServerSocket
             }
-            Pool.close(); // Cierra las conexiones del pool       
+            Pool.close(); // Close the connection pools       
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-     
-     
+
+    /**
+     * Starts the server, initializes the {@code ServerSocket} and connection pool,
+     * and enters the main loop to accept and handle client connections.
+     * The server will continue running until {@code isRunning} is set to {@code false}.
+     *
+     * @throws ServerException if a database access error occurs
+     * @throws SQLException if a database access error occurs during pool initialization
+     */
     public void startServer() throws SQLException, ServerException {
-    try {
-        // Initialize ServerSocket and Connection Pool
-        serverSocket = new ServerSocket(port);
-        Pool.getDatabaseCredentials(); // Configure connection pool
+        try {
+            // Initialize ServerSocket and Connection Pool
+            serverSocket = new ServerSocket(port);
+            Pool.getDatabaseCredentials(); // Configure connection pool
 
-        // Start thread to monitor keyboard input
-        Thread inputThread = new Thread(new KeyboardListener());
-        inputThread.start();
+            // Start thread to monitor keyboard input
+            Thread inputThread = new Thread(new KeyboardListener());
+            inputThread.start();
 
-        // Main loop to accept client connections
-        while (isRunning) {
-            if (threadCounter < maxThreads) {
-                Socket clientSocket = serverSocket.accept();
-                WorkThread worker = new WorkThread(clientSocket);
-                new Thread(worker).start();
-                incrementThreadCounter();
-            } else {                    
-                Thread.sleep(1000); // Wait if max threads reached
+            // Main loop to accept client connections
+            while (isRunning) {
+                if (threadCounter < maxThreads) {
+                    Socket clientSocket = serverSocket.accept();
+                    WorkThread worker = new WorkThread(clientSocket);
+                    new Thread(worker).start();
+                    incrementThreadCounter();
+                } else {                    
+                    Thread.sleep(1000); // Wait if max threads reached
+                }
             }
-        }shutDownServer();
-    } catch (IOException | InterruptedException e){
-        
-    }finally {
-        // Close resources when server stops
-        shutDownServer();
+            shutDownServer();
+        } catch (IOException | InterruptedException e) {
+            // Handle exceptions
+        } finally {
+            shutDownServer(); // Close resources when server stops
+        }
     }
-}
 
     /**
      * Increments the thread counter, which tracks the number of active client threads.
+     * Ensures that new threads can only be created if {@code threadCounter} is below {@code maxThreads}.
      */
     public synchronized void incrementThreadCounter() {
         if (getThreadCounter() < getMaxThreads()){
@@ -132,13 +145,13 @@ public class ServerApplication {
 
     /**
      * Decrements the thread counter, used when a client thread completes its work.
+     * Ensures that {@code threadCounter} does not go below zero.
      */
     public synchronized void decrementThreadCounter() {
         if (getThreadCounter() > 0){
             threadCounter--;
         }
     }
-
 
     /**
      * Gets the current thread counter value.

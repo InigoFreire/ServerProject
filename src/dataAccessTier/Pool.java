@@ -6,7 +6,6 @@ import java.util.ResourceBundle;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 
-
 /**
  *
  * @author Ander
@@ -31,16 +30,18 @@ public class Pool {
     }
 
     //Este método crea y configura el pool de conexiones si aún no ha sido inicializado (ds == null)
+    
     public static DataSource getDataSource() {
         if (ds == null) {
             ds = new BasicDataSource();
+
             // Define el controlador JDBC para PostgreSQL
             ds.setDriverClassName("org.postgresql.Driver");
             ds.setUsername(username);
             ds.setPassword(password);
             ds.setUrl(url);
             // Número de conexiones iniciales en el pool cuando se crea
-            ds.setInitialSize(10);
+            ds.setInitialSize(1);
             // Número máximo de conexiones que pueden quedar ociosas en el pool sin ser cerradas (ociosas: abiertas sin actividad)
             ds.setMaxIdle(10);
             // Número total máximo de conexiones abiertas que puede manejar el pool

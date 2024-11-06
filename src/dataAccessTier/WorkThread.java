@@ -20,13 +20,15 @@ import message.Message;
 import message.MessageType;
 import serverLogicTier.ServerApplication;
 import userLogicTier.model.User;
+
 /**
  *
  * @author InigoFreire
  */
-public class WorkThread implements Runnable { 
+public class WorkThread implements Runnable {
+
     private ObjectInputStream reader;
-    private  ObjectOutputStream writer;
+    private ObjectOutputStream writer;
     private final Socket socket;
     private ServerApplication main;
     private Logger logger = Logger.getLogger(WorkThread.class.getName());
@@ -37,13 +39,13 @@ public class WorkThread implements Runnable {
     }
 
     /**
-     * 
+     *
      */
     @Override
     public void run() {
         try {
             reader = new ObjectInputStream(socket.getInputStream());
-            writer = new ObjectOutputStream(socket.getOutputStream());            
+            writer = new ObjectOutputStream(socket.getOutputStream());
             logger.log(Level.INFO, "Reader & writer instanced");
 
             // Reads client's message
@@ -68,27 +70,30 @@ public class WorkThread implements Runnable {
             }
         }
     }
+
     /**
-    * Handles the message delivered by both the client (@link userLogicTier.Client) and the server (@link dataAcessTier.DAO).
-    * 
-    * <ul>
-    * <li>
-    * <p>1. Firstly, it receives the message from the client side and extracts the user inside it so it can send to the server side
-    * a message and a user, in order to be used in many operations in the DB.</p> 
-    * </li>
-    * <li>
-    * <p>2. Then, it sends the message to the server and receives the response.</p>
-    * </li>
-    * <li>
-    * <p>3. Finally, Depending on the response received from the server side, sends back a message and a user inside a response object to the client.</p>
-    * </ul> 
-    *
-    * @param message a message with a request from the client side
-    * @return a message containing the ser side response
-    */
-    private Message handleMessage(Message message){
+     * Handles the message delivered by both the client (@link userLogicTier.Client) and the server (@link dataAcessTier.DAO).
+     *
+     * <ul>
+     * <li>
+     * <p>
+     * 1. Firstly, it receives the message from the client side and extracts the user inside it so it can send to the server side a message and a user, in order to be used in many operations in the DB.</p>
+     * </li>
+     * <li>
+     * <p>
+     * 2. Then, it sends the message to the server and receives the response.</p>
+     * </li>
+     * <li>
+     * <p>
+     * 3. Finally, Depending on the response received from the server side, sends back a message and a user inside a response object to the client.</p>
+     * </ul>
+     *
+     * @param message a message with a request from the client side
+     * @return a message containing the ser side response
+     */
+    private Message handleMessage(Message message) {
         Message response = new Message(null, MessageType.SERVER_RESPONSE_DENIED);
-        try{
+        try {
             if (message.getMessageType() == MessageType.SERVER_SIGN_UP_REQUEST) {
                 User user = message.getUser();
                 logger.log(Level.WARNING, "Sign up request received", message.getMessageType());
@@ -103,6 +108,8 @@ public class WorkThread implements Runnable {
                 User user = message.getUser();
                 logger.log(Level.WARNING, "Sign in request received", message.getMessageType());
                 if (DAOFactory.getDAO().signIn(user) != null) {
+                    user = DAOFactory.getDAO().signIn(user);
+                    System.out.println(user.getName());
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
                     logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {

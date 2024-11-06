@@ -9,6 +9,7 @@ import exceptions.ExistingUserException;
 import exceptions.InactiveUserException;
 import exceptions.ServerException;
 import exceptions.UserCredentialException;
+import java.awt.BorderLayout;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,9 +26,8 @@ import userLogicTier.model.User;
  * @authors Aitziber
  */
 public class DAO implements Signable {
-    
+
     private static final Logger logger = Logger.getLogger(DAO.class.getName());
-    private Connection connection = null;
 
     /**
      *
@@ -41,21 +41,17 @@ public class DAO implements Signable {
         PreparedStatement stmtPartner = null;
         PreparedStatement stmtUser = null;
         ResultSet generatedKeys = null;
-        
+
         String insertPartner = "INSERT INTO res_partner(company_id, name, street, city, zip, email) VALUES (1, ?, ?, ?, ?, ?);";
         String insertUser = "INSERT INTO res_users(company_id, partner_id, login, password, active, notification_type) VALUES (1, ?, ?, ?, ?, 'email');";
-        
-        try {
+
+        // Usamos una conexión local
+        try (Connection connection = getConnection()) {
             // Verificar si el usuario ya existe
             if (checkUserExistence(user.getEmail())) {
-                throw new ExistingUserException("El usuario ya existe.");
+                throw new ExistingUserException("User already exists");
             }
-            
-            // Lo pongo otra vez a null para evitar coflictos por haberlo usado en el método
-            stmtUser = null;
-            
-            connection = getConnection();
-            
+
             // Iniciar la transacción
             connection.setAutoCommit(false);
 
@@ -85,31 +81,30 @@ public class DAO implements Signable {
 
             // Confirmar la transacción
             connection.commit();
-            
+
             return user;
 
         } catch (SQLException e) {
-            try {
-                if (connection != null) connection.rollback();
-                logger.log(Level.SEVERE, "Error en la inserción de datos", e);
-                throw new ServerException("SERVER ERROR. Error en la inserción de datos");
-            } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error en la inserción de datos", ex);
-                throw new ServerException("SERVER ERROR. Error en la inserción de datos");
-            }
+            throw new ServerException("SERVER ERROR. Error searching user");
+
         } finally {
             // Cerrar recursos
-             try {
-                if (generatedKeys != null) generatedKeys.close();
-                if (stmtPartner != null) stmtPartner.close();
-                if (stmtUser != null) stmtUser.close();
-                if (connection != null) connection.close();
+            try {
+                if (generatedKeys != null) {
+                    generatedKeys.close();
+                }
+                if (stmtPartner != null) {
+                    stmtPartner.close();
+                }
+                if (stmtUser != null) {
+                    stmtUser.close();
+                }
             } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error al cerrar recursos", ex);
-                throw new ServerException("SERVER ERROR. Error al cerrar recursos");
+                throw new ServerException("SERVER ERROR. Error searching user");
             }
         }
     }
+
     /**
      *
      * @param email
@@ -119,29 +114,38 @@ public class DAO implements Signable {
     public boolean checkUserExistence(String email) throws ServerException {
         PreparedStatement stmt = null;
         ResultSet rs = null;
+
         String searchUser = "SELECT login FROM res_users WHERE login = ?;";
 
-        try {
+        // Usamos una conexión local
+        try (Connection connection = getConnection()) {
+            if (connection == null) {
+                throw new ServerException("SERVER ERROR. La conexión con la base de datos es nula.");
+            }
             // Preparar la consulta con parámetros para evitar inyecciones SQL
             stmt = connection.prepareStatement(searchUser);
             stmt.setString(1, email);
 
             // Ejecutar la consulta y obtener los resultados
             rs = stmt.executeQuery();
-            
+
             // Retornar true si el usuario existe
             return rs.next();
 
         } catch (SQLException e) {
-            throw new ServerException("SERVER ERROR. Error al buscar el usuario");
-        }
-         finally {
+            throw new ServerException("SERVER ERROR. Error searching user");
+
+        } finally {
             // Cerrar ResultSet y PreparedStatement en el bloque finally
             try {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
             } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error al cerrar ResultSet o PreparedStatement", ex);
+                throw new ServerException("SERVER ERROR. Error searching user");
             }
         }
     }
@@ -158,15 +162,13 @@ public class DAO implements Signable {
     public User signIn(User user) throws ServerException, UserCredentialException, InactiveUserException {
         PreparedStatement stmt = null;
         ResultSet rs = null;
-
         String selectUserData = "SELECT u.login, u.password, u.active, p.name, p.street, p.city, p.zip "
                 + "FROM res_users u "
                 + "JOIN res_partner p ON u.partner_id = p.id "
                 + "WHERE u.login = ? AND u.password = ? AND u.active = true;";
 
-        try {
-            connection = getConnection();
-
+        // Usamos una conexión local
+        try (Connection connection = getConnection()) {
             // Preparar la consulta con parámetros para evitar inyecciones SQL
             stmt = connection.prepareStatement(selectUserData);
             stmt.setString(1, user.getEmail());
@@ -177,7 +179,6 @@ public class DAO implements Signable {
 
             // Si el usuario existe y está activo, asignar los valores a un nuevo objeto User
             if (rs.next()) {
-                // Lo pongo así por que hay un constructor con todos esos valores
                 user = new User(
                         rs.getString("name"),
                         rs.getString("login"),
@@ -187,30 +188,33 @@ public class DAO implements Signable {
                         rs.getString("zip"),
                         rs.getBoolean("active")
                 );
-            
-            //  Excepciones a contemplar
             } else {
-                throw new UserCredentialException("Credenciales de usuario no válidas.");
+                throw new UserCredentialException("Invalid user credentials");
             }
+            
             if (!user.isActive()) {
                 throw new InactiveUserException("User is inactive");
             }
+            System.out.println(user.getName());
             return user;
+
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error en la consulta de inicio de sesión", e);
-            throw new ServerException("SERVER ERROR. Error al buscar el usuario");
+            throw new ServerException("SERVER ERROR. Error searching user");
 
         } finally {
             try {
-                if (rs != null) rs.close();
-                if (stmt != null) stmt.close();
-                if (connection != null) connection.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
             } catch (SQLException ex) {
-                logger.log(Level.SEVERE, "Error al cerrar ResultSet o PreparedStatement", ex);
+                throw new ServerException("SERVER ERROR. Error searching user");
             }
         }
     }
-          
+
     // Accede a la conexión de la clase Pool
     private Connection getConnection() throws SQLException {
         return Pool.getConexion();

@@ -44,13 +44,9 @@ public class WorkThread implements Runnable {
     }
 
     /**
-<<<<<<< HEAD
-     *
-=======
      * Default mehtod of a thread class.
      * Receives the message from the client side, translates it so it can be interpreted and then sent to the server side.
      * Then it receives the response from the server side and sends it back to the client.
->>>>>>> 1dea14fb81ef872f3d8fd9ce21d6c58ba9b3b916
      */
     @Override
     public void run() {
@@ -131,7 +127,6 @@ public class WorkThread implements Runnable {
                 // Checks if the user is registered
                 if (DAOFactory.getDAO().signIn(user) != null) {
                     user = DAOFactory.getDAO().signIn(user);
-                    System.out.println(user.getName());
                     // If the user is registered, it gets an OK message
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
                     logger.log(Level.WARNING, "Server response OK", message.getMessageType());

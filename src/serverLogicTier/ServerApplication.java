@@ -14,22 +14,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The {@code ServerApplication} class represents the main server application responsible for
- * loading configuration, managing client connections, and maintaining a connection pool.
+ * The {@code ServerApplication} class represents the main server application responsible for loading configuration, managing client connections, and maintaining a connection pool.
  * <p>
- * This class initializes a server that listens for incoming client connections, processes
- * them using worker threads, and manages the number of concurrent threads.
- * Configuration values such as the server port and maximum number of threads are loaded from a
- * properties file.
+ * This class initializes a server that listens for incoming client connections, processes them using worker threads, and manages the number of concurrent threads. Configuration values such as the server port and maximum number of threads are loaded from a properties file.
  * </p>
- * 
- * <p><b>Usage:</b></p>
+ *
+ * <p>
+ * <b>Usage:</b></p>
  * <pre>
  *     ServerApplication server = new ServerApplication();
  *     server.loadConfig();
  *     server.startServer();
  * </pre>
- * 
+ *
  * @author Pablo
  * @version 1.0
  * @see Pool
@@ -40,14 +37,13 @@ public class ServerApplication {
 
     private static int port;
     private static int maxThreads;
-    private static int threadCounter = 0; 
+    private static int threadCounter = 0;
     private static ServerSocket serverSocket;
     public static volatile boolean isRunning = true;
     private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     /**
-     * Main entry point for the {@code ServerApplication}.
-     * Loads the server configuration and starts the server if configuration is successful.
+     * Main entry point for the {@code ServerApplication}. Loads the server configuration and starts the server if configuration is successful.
      *
      * @param args the command line arguments
      * @throws SQLException if a database access error occurs
@@ -65,21 +61,18 @@ public class ServerApplication {
     }
 
     /**
-     * Loads the server configuration from a {@code .properties} file.
-     * Retrieves values for the server port and maximum number of threads.
+     * Loads the server configuration from a {@code .properties} file. Retrieves values for the server port and maximum number of threads.
      */
-     public void loadConfig() {
+    public void loadConfig() {
         ResourceBundle configFile = ResourceBundle.getBundle("resources.config");
         port = Integer.parseInt(configFile.getString("PORT"));
         maxThreads = Integer.parseInt(configFile.getString("MAX_THREADS"));
     }
-    
 
     public static void stopRunning() {
-    ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
+        ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
     }
-      
-    
+
     public static void shutDownServer() throws SQLException {
         // Cierra el servidor y los recursos como el socket
         isRunning = false;
@@ -92,46 +85,47 @@ public class ServerApplication {
             e.printStackTrace();
         }
     }
-     
-     
+
     public void startServer() throws SQLException, ServerException {
-    try {
-        // Initialize ServerSocket and Connection Pool
-        serverSocket = new ServerSocket(port);
-        logger.log(Level.INFO, "Port acquired");
-        Pool.getDatabaseCredentials(); // Configure connection pool
-        logger.log(Level.INFO, "Pool credentials acquired");
+        try {
+            // Initialize ServerSocket and Connection Pool
+            serverSocket = new ServerSocket(port);
+            logger.log(Level.INFO, "Port acquired");
+            Pool.getDatabaseCredentials(); // Configure connection pool
+            logger.log(Level.INFO, "Pool credentials acquired");
 
-        // Start thread to monitor keyboard input
-        Thread inputThread = new Thread(new KeyboardListener());
-        inputThread.start();
-        logger.log(Level.INFO, "InputListener thread started");
+            // Start thread to monitor keyboard input
+            Thread inputThread = new Thread(new KeyboardListener());
+            inputThread.start();
+            logger.log(Level.INFO, "InputListener thread started");
 
-        // Main loop to accept client connections
-        while (isRunning) {
-            if (threadCounter < maxThreads) {
-                Socket clientSocket = serverSocket.accept();
-                logger.log(Level.INFO, "Incoming socket connection accepted");
-                WorkThread worker = new WorkThread(clientSocket,this);
-                logger.log(Level.INFO, "Worker thread created");
-                new Thread(worker).start();
-                incrementThreadCounter();
-                logger.log(Level.INFO, "Worker count (+1) =", threadCounter);
-            } else {                    
-                Thread.sleep(1000); // Wait if max threads reached
+            // Main loop to accept client connections
+            while (isRunning) {
+                if (threadCounter < maxThreads) {
+                    Socket clientSocket = serverSocket.accept();
+                    logger.log(Level.INFO, "Incoming socket connection accepted");
+                    WorkThread worker = new WorkThread(clientSocket, this);
+                    logger.log(Level.INFO, "Worker thread created");
+                    new Thread(worker).start();
+                    incrementThreadCounter();
+                    logger.log(Level.INFO, "Worker count (+1) =", threadCounter);
+                } else {
+                    Thread.sleep(1000); // Wait if max threads reached
+                }
             }
-        }shutDownServer();
-    } catch (IOException | InterruptedException e)
-    {}finally {
-        shutDownServer(); // Close resources when server stops
+            shutDownServer();
+        } catch (IOException | InterruptedException e) {
+            
+        } finally {
+            shutDownServer(); // Close resources when server stops
+        }
     }
-}
 
     /**
      * Increments the thread counter, which tracks the number of active client threads.
      */
     public synchronized void incrementThreadCounter() {
-        if (getThreadCounter() < getMaxThreads()){
+        if (getThreadCounter() < getMaxThreads()) {
             threadCounter++;
         }
     }
@@ -140,18 +134,17 @@ public class ServerApplication {
      * Decrements the thread counter, used when a client thread completes its work.
      */
     public synchronized void decrementThreadCounter() {
-        if (getThreadCounter() > 0){
+        if (getThreadCounter() > 0) {
             threadCounter--;
         }
     }
 
-
     /**
      * Gets the current thread counter value.
-     * 
+     *
      * @return the current count of active threads
      */
-    public int getThreadCounter(){
+    public int getThreadCounter() {
         return threadCounter;
     }
 
@@ -160,16 +153,16 @@ public class ServerApplication {
      *
      * @param threadCounterInput the new count for active threads
      */
-    public void setThreadCounter(int threadCounterInput){
+    public void setThreadCounter(int threadCounterInput) {
         this.threadCounter = threadCounterInput;
     }
 
     /**
      * Gets the maximum number of allowed threads.
-     * 
+     *
      * @return the maximum number of threads
      */
-    public int getMaxThreads(){
+    public int getMaxThreads() {
         return maxThreads;
     }
 
@@ -178,7 +171,7 @@ public class ServerApplication {
      *
      * @param maxThreadsInput the maximum number of threads allowed
      */
-    public void setMaxThreads(int maxThreadsInput){
+    public void setMaxThreads(int maxThreadsInput) {
         this.maxThreads = maxThreadsInput;
     }
 }

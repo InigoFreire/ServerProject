@@ -7,7 +7,11 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 
 /**
- *
+ * The Pool class provides a connection pool for managing database connections efficiently.
+ * It initializes a BasicDataSource for PostgreSQL, using configuration settings from a properties file.
+ * This setup allows connections to be reused and managed automatically, enhancing performance for applications
+ * requiring frequent database access.
+ * 
  * @author Ander
  */
 public class Pool {
@@ -18,10 +22,12 @@ public class Pool {
     private static String url;
     private static int userCap;
 
-    // Asigna el usuario y contraseña desde el archivo de propiedades para entrar a la base de datos
+    /**
+     * Loads database credentials from a configuration file.
+     * These credentials include database user, password, URL, and connection limit.
+     */
     public static void getDatabaseCredentials() {
         ResourceBundle configFile;
-        // Ruta de archivo de propiedades
         configFile = ResourceBundle.getBundle("resources.config");
         username = configFile.getString("DB_USER");
         password = configFile.getString("DB_PASSWORD");
@@ -29,39 +35,46 @@ public class Pool {
         userCap = Integer.parseInt(configFile.getString("USER_CAP"));
     }
 
-    //Este método crea y configura el pool de conexiones si aún no ha sido inicializado (ds == null)
-    
+    /**
+     * Creates and configures the connection pool if it has not been initialized.
+     * Sets up parameters such as initial size, maximum idle connections, total connections, 
+     * and wait time.
+     * 
+     * @return a DataSource object representing the connection pool
+     */
     public static DataSource getDataSource() {
         if (ds == null) {
             ds = new BasicDataSource();
-
-            // Define el controlador JDBC para PostgreSQL
             ds.setDriverClassName("org.postgresql.Driver");
             ds.setUsername(username);
             ds.setPassword(password);
             ds.setUrl(url);
-            // Número de conexiones iniciales en el pool cuando se crea
             ds.setInitialSize(1);
-            // Número máximo de conexiones que pueden quedar ociosas en el pool sin ser cerradas (ociosas: abiertas sin actividad)
             ds.setMaxIdle(10);
-            // Número total máximo de conexiones abiertas que puede manejar el pool
             ds.setMaxTotal(userCap);
-            // Tiempo máximo en milisegundos que un hilo puede esperar para obtener una conexión antes de lanzar una excepción (-1 espera de manera ilimitada)
             ds.setMaxWaitMillis(10000);
         }
         return ds;
     }
 
+    /**
+     * Obtains a connection from the pool, which can be used for database operations.
+     * Throws a SQLException if no connections are available within the specified wait time.
+     * 
+     * @return a Connection object for database interaction
+     * @throws SQLException if a connection cannot be obtained
+     */
     public static Connection getConexion() throws SQLException {
-        // Devuelve una conexión del pool llamando al método getConnection() de DataSource
-        // La conexión que se devuelve es del tipo Connection, lista para ser usada en operaciones de base de datos
-        // Si no hay conexiones disponibles en el pool y se alcanza el tiempo de espera (MaxWaitMillis), lanzará una excepción SQLException
         return getDataSource().getConnection();
     }
 
+    /**
+     * Closes the connection pool, releasing all database connections.
+     * 
+     * @throws SQLException if an error occurs while closing connections
+     */
     public static void close() throws SQLException {
         if (ds != null) {
-            // Cierra el pool y libera todas las conexiones
             ds.close();
         }
     }

@@ -60,9 +60,8 @@ public class ServerApplication {
         try {
             server.startServer();
         } catch (ServerException e) {
-            
+            // Handle ServerException
         }
-        
     }
 
     /**

@@ -168,7 +168,7 @@ public class DAO implements Signable {
         String selectUserData = "SELECT u.login, u.password, u.active, p.name, p.street, p.city, p.zip "
                 + "FROM res_users u "
                 + "JOIN res_partner p ON u.partner_id = p.id "
-                + "WHERE u.login = ? AND u.password = ? AND u.active = true;";
+                + "WHERE u.login = ? AND u.password = ?";
 
         try (Connection connection = getConnection()) {
             stmt = connection.prepareStatement(selectUserData);
@@ -190,11 +190,11 @@ public class DAO implements Signable {
             } else {
                 throw new UserCredentialException("Invalid user credentials");
             }
-            
+
             if (!user.isActive()) {
                 throw new InactiveUserException("User is inactive");
             }
-            System.out.println(user.getName());
+            
             return user;
 
         } catch (SQLException e) {

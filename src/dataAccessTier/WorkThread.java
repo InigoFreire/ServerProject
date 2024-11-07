@@ -46,9 +46,9 @@ public class WorkThread implements Runnable {
     }
 
     /**
-     * Starts the thread to handle client requests.
-     * Reads the incoming message, processes it, and sends back a response.
-     * Closes the socket and decrements the server's thread counter after completing the interaction.
+     * Default mehtod of a thread class.
+     * Receives the message from the client side, translates it so it can be interpreted and then sent to the server side.
+     * Then it receives the response from the server side and sends it back to the client.
      */
     @Override
     public void run() {
@@ -106,6 +106,8 @@ public class WorkThread implements Runnable {
 
                 if (DAOFactory.getDAO().signIn(user) != null) {
                     user = DAOFactory.getDAO().signIn(user);
+
+                    // If the user is registered, it gets an OK message
                     response = new Message(user, MessageType.SERVER_RESPONSE_OK);
                     logger.log(Level.WARNING, "Server response OK", message.getMessageType());
                 } else {

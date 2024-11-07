@@ -16,23 +16,18 @@ import java.util.Scanner;
  */
 public class KeyboardListener implements Runnable {
 
-    /**
-     * Listens for console input continuously until the "close" command is entered.
-     * When "close" is entered, this method:
-     *  - Sets ServerApplication.isRunning to false to stop the server loop.
-     *  - Calls ServerApplication.shutDownServer() to release server resources.
-     * Once "close" is entered, the loop exits and the scanner is closed.
-     */
     @Override
     public void run() {
         Scanner scanner = new Scanner(System.in);
     
-        while (ServerApplication.isRunning) {
+          while (ServerApplication.isRunning) {
             String input = scanner.nextLine();
             if ("close".equalsIgnoreCase(input)) {
-                ServerApplication.stopRunning(); // Stop server loop
+
+                ServerApplication.stopRunning();
                 try {
-                    ServerApplication.shutDownServer(); // Free resources
+                    // Closes server´s resources
+                    ServerApplication.shutDownServer();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }

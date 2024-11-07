@@ -23,19 +23,28 @@ import java.util.logging.Logger;
  * server.loadConfig();
  * server.startServer();
  * 
- * @author Pablo
- * @version 1.0
  * @see Pool
  * @see WorkThread
  * @see ServerSocket
  */
 public class ServerApplication {
 
+    /** The port on which the server listens for incoming client connections. */
     private static int port;
+
+    /** The maximum number of threads allowed to process client connections concurrently. */
     private static int maxThreads;
-    private static int threadCounter = 0; 
+
+    /** Counter to track the number of active client threads. */
+    private static int threadCounter = 0;
+
+    /** The server socket that listens for incoming client connections. */
     private static ServerSocket serverSocket;
+
+    /** Flag indicating whether the server is running. */
     public static volatile boolean isRunning = true;
+
+    /** Logger for logging messages in the server application. */
     private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     /**
@@ -46,7 +55,6 @@ public class ServerApplication {
      * @throws SQLException if a database access error occurs
      */
     public static void main(String[] args) throws SQLException {
-
         logger.log(Level.INFO, "Server Application started");
         ServerApplication server = new ServerApplication();
         server.loadConfig();
@@ -55,8 +63,6 @@ public class ServerApplication {
             server.startServer();
         } catch (ServerException e) {
             // Handle ServerException
-        } catch (InterruptedException | IOException ex) {
-            logger.log(Level.INFO, "Server Application started");
         }
     }
 
@@ -75,21 +81,22 @@ public class ServerApplication {
      * stopping the main loop in startServer() and shutting down the server.
      */
     public static void stopRunning() {
-        ServerApplication.isRunning = false;
+        ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
     }
 
     /**
-     * Shuts down the server and releases all resources, closing ServerSocket and the connection pool.
-     *
+     * Shuts down the server and releases all resources. Closes the ServerSocket 
+     * and connection pool, ensuring proper cleanup.
+     * 
      * @throws SQLException if a database access error occurs during pool shutdown
      */
     public static void shutDownServer() throws SQLException {
         isRunning = false;
         try {
             if (serverSocket != null && !serverSocket.isClosed()) {
-                serverSocket.close(); // Close ServerSocket
+                serverSocket.close();
             }
-            Pool.close(); // Close connection pool
+            Pool.close();   
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -101,12 +108,11 @@ public class ServerApplication {
      *
      * @throws ServerException if a database access error occurs
      * @throws SQLException if a database access error occurs during pool initialization
-     * @throws java.lang.InterruptedException
-     * @throws java.io.IOException
      */
-    public void startServer() throws SQLException, ServerException, InterruptedException, IOException {
 
+    public void startServer() throws SQLException, ServerException {
         try {
+            // Initialize ServerSocket and Connection Pool
             serverSocket = new ServerSocket(port);
             logger.log(Level.INFO, "Port acquired");
             Pool.getDatabaseCredentials(); // Configure connection pool
@@ -127,15 +133,16 @@ public class ServerApplication {
                     new Thread(worker).start();
                     incrementThreadCounter();
                     logger.log(Level.INFO, "Worker count (+1) =", threadCounter);
-                } else {                    
+                } else {
                     Thread.sleep(1000); // Wait if max threads reached
                 }
-                shutDownServer();
             }
+            shutDownServer();
         } catch (IOException | InterruptedException e) {
-            // Handle exceptions
+            //
         } finally {
-            shutDownServer(); // Close resources when server stops
+            // Close resources when server stops
+            shutDownServer();
         }
     }
 
@@ -144,7 +151,7 @@ public class ServerApplication {
      * New threads can only be created if threadCounter is below maxThreads.
      */
     public synchronized void incrementThreadCounter() {
-        if (getThreadCounter() < getMaxThreads()){
+        if (getThreadCounter() < getMaxThreads()) {
             threadCounter++;
         }
     }
@@ -154,7 +161,7 @@ public class ServerApplication {
      * Ensures threadCounter does not go below zero.
      */
     public synchronized void decrementThreadCounter() {
-        if (getThreadCounter() > 0){
+        if (getThreadCounter() > 0) {
             threadCounter--;
         }
     }
@@ -164,7 +171,7 @@ public class ServerApplication {
      * 
      * @return the current count of active threads
      */
-    public int getThreadCounter(){
+    public int getThreadCounter() {
         return threadCounter;
     }
 
@@ -173,7 +180,7 @@ public class ServerApplication {
      *
      * @param threadCounterInput the new count for active threads
      */
-    public void setThreadCounter(int threadCounterInput){
+    public void setThreadCounter(int threadCounterInput) {
         this.threadCounter = threadCounterInput;
     }
 
@@ -182,7 +189,7 @@ public class ServerApplication {
      * 
      * @return the maximum number of threads
      */
-    public int getMaxThreads(){
+    public int getMaxThreads() {
         return maxThreads;
     }
 
@@ -191,7 +198,7 @@ public class ServerApplication {
      *
      * @param maxThreadsInput the maximum number of threads allowed
      */
-    public void setMaxThreads(int maxThreadsInput){
+    public void setMaxThreads(int maxThreadsInput) {
         this.maxThreads = maxThreadsInput;
     }
 }

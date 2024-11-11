@@ -91,6 +91,7 @@ public class DAO implements Signable {
             return user;
 
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL exception SignUp DAO", e);
             throw new ServerException("SERVER ERROR. Error searching user");
 
         } finally {
@@ -105,6 +106,7 @@ public class DAO implements Signable {
                     stmtUser.close();
                 }
             } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "SQL exception closing resurces", ex);
                 throw new ServerException("SERVER ERROR. Error searching user");
             }
         }
@@ -135,6 +137,7 @@ public class DAO implements Signable {
             return rs.next();
 
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL exception checkUserExistence DAO", e);
             throw new ServerException("SERVER ERROR. Error searching user");
 
         } finally {
@@ -146,6 +149,7 @@ public class DAO implements Signable {
                     stmt.close();
                 }
             } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "SQL exception closing resources", ex);
                 throw new ServerException("SERVER ERROR. Error searching user");
             }
         }
@@ -198,6 +202,7 @@ public class DAO implements Signable {
             return user;
 
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "SQL exception SignIn DAO", e);
             throw new ServerException("SERVER ERROR. Error searching user");
 
         } finally {
@@ -209,6 +214,7 @@ public class DAO implements Signable {
                     stmt.close();
                 }
             } catch (SQLException ex) {
+                logger.log(Level.SEVERE, "SQL exception closing resources", ex);
                 throw new ServerException("SERVER ERROR. Error searching user");
             }
         }

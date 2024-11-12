@@ -13,43 +13,48 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The ServerApplication class serves as the main server program that loads configuration settings, 
- * manages client connections, and maintains a connection pool. 
- * It sets up a server that listens for incoming client connections, processes them with worker threads, 
- * and controls the maximum number of concurrent threads based on configuration.
- * 
- * Usage:
- * ServerApplication server = new ServerApplication();
- * server.loadConfig();
- * server.startServer();
- * 
+ * The ServerApplication class serves as the main server program that loads configuration settings, manages client connections, and maintains a connection pool. It sets up a server that listens for incoming client connections, processes them with worker threads, and controls the maximum number of concurrent threads based on configuration.
+ *
+ * Usage: ServerApplication server = new ServerApplication(); server.loadConfig(); server.startServer();
+ *
  * @see Pool
  * @see WorkThread
  * @see ServerSocket
  */
 public class ServerApplication {
 
-    /** The port on which the server listens for incoming client connections. */
+    /**
+     * The port on which the server listens for incoming client connections.
+     */
     private static int port;
 
-    /** The maximum number of threads allowed to process client connections concurrently. */
+    /**
+     * The maximum number of threads allowed to process client connections concurrently.
+     */
     private static int maxThreads;
 
-    /** Counter to track the number of active client threads. */
+    /**
+     * Counter to track the number of active client threads.
+     */
     private static int threadCounter = 0;
 
-    /** The server socket that listens for incoming client connections. */
+    /**
+     * The server socket that listens for incoming client connections.
+     */
     private static ServerSocket serverSocket;
 
-    /** Flag indicating whether the server is running. */
+    /**
+     * Flag indicating whether the server is running.
+     */
     public static volatile boolean isRunning = true;
 
-    /** Logger for logging messages in the server application. */
+    /**
+     * Logger for logging messages in the server application.
+     */
     private static final Logger logger = Logger.getLogger(ServerApplication.class.getName());
 
     /**
-     * Main entry point for ServerApplication.
-     * Loads configuration and starts the server if configuration is successful.
+     * Main entry point for ServerApplication. Loads configuration and starts the server if configuration is successful.
      *
      * @param args command line arguments
      * @throws SQLException if a database access error occurs
@@ -67,8 +72,7 @@ public class ServerApplication {
     }
 
     /**
-     * Loads server configuration from a .properties file, 
-     * including server port and maximum number of threads.
+     * Loads server configuration from a .properties file, including server port and maximum number of threads.
      */
     public void loadConfig() {
         ResourceBundle configFile = ResourceBundle.getBundle("resources.config");
@@ -77,17 +81,15 @@ public class ServerApplication {
     }
 
     /**
-     * Stops the server by setting isRunning to false, 
-     * stopping the main loop in startServer() and shutting down the server.
+     * Stops the server by setting isRunning to false, stopping the main loop in startServer() and shutting down the server.
      */
     public static void stopRunning() {
         ServerApplication.isRunning = false;  // Establece isRunning en false directamente en ServerApplication
     }
 
     /**
-     * Shuts down the server and releases all resources. Closes the ServerSocket 
-     * and connection pool, ensuring proper cleanup.
-     * 
+     * Shuts down the server and releases all resources. Closes the ServerSocket and connection pool, ensuring proper cleanup.
+     *
      * @throws SQLException if a database access error occurs during pool shutdown
      */
     public static void shutDownServer() throws SQLException {
@@ -96,26 +98,24 @@ public class ServerApplication {
             if (serverSocket != null && !serverSocket.isClosed()) {
                 serverSocket.close();
             }
-            Pool.close();   
+            Pool.closeAllConnections();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Starts the server, initializes the ServerSocket and connection pool, 
-     * and continuously accepts and processes client connections until isRunning is set to false.
+     * Starts the server, initializes the ServerSocket and connection pool, and continuously accepts and processes client connections until isRunning is set to false.
      *
      * @throws ServerException if a database access error occurs
      * @throws SQLException if a database access error occurs during pool initialization
      */
-
     public void startServer() throws SQLException, ServerException {
         try {
             // Initialize ServerSocket and Connection Pool
             serverSocket = new ServerSocket(port);
             logger.log(Level.INFO, "Port acquired");
-            Pool.getDatabaseCredentials(); // Configure connection pool
+            Pool.initializePool(); // Configure connection pool
             logger.log(Level.INFO, "Pool credentials acquired");
 
             // Start thread to monitor keyboard input
@@ -147,8 +147,7 @@ public class ServerApplication {
     }
 
     /**
-     * Increments the thread counter, which tracks the number of active client threads.
-     * New threads can only be created if threadCounter is below maxThreads.
+     * Increments the thread counter, which tracks the number of active client threads. New threads can only be created if threadCounter is below maxThreads.
      */
     public synchronized void incrementThreadCounter() {
         if (getThreadCounter() < getMaxThreads()) {
@@ -157,8 +156,7 @@ public class ServerApplication {
     }
 
     /**
-     * Decrements the thread counter, used when a client thread completes its work.
-     * Ensures threadCounter does not go below zero.
+     * Decrements the thread counter, used when a client thread completes its work. Ensures threadCounter does not go below zero.
      */
     public synchronized void decrementThreadCounter() {
         if (getThreadCounter() > 0) {
@@ -168,7 +166,7 @@ public class ServerApplication {
 
     /**
      * Returns the current thread counter value.
-     * 
+     *
      * @return the current count of active threads
      */
     public int getThreadCounter() {
@@ -186,7 +184,7 @@ public class ServerApplication {
 
     /**
      * Returns the maximum number of allowed threads.
-     * 
+     *
      * @return the maximum number of threads
      */
     public int getMaxThreads() {

@@ -1,34 +1,25 @@
 package dataAccessTier;
 
+import exceptions.UserCapException;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
-import javax.sql.DataSource;
-import org.apache.commons.dbcp2.BasicDataSource;
+import java.util.Stack;
 
-/**
- * The Pool class provides a connection pool for managing database connections efficiently.
- * It initializes a BasicDataSource for PostgreSQL, using configuration settings from a properties file.
- * This setup allows connections to be reused and managed automatically, enhancing performance for applications
- * requiring frequent database access.
- * 
- * @author Ander
- */
 public class Pool {
 
-    private static BasicDataSource ds = null;
+    private static Stack<Connection> connectionStack = new Stack<>();
     private static String username;
     private static String password;
     private static String url;
     private static int userCap;
 
     /**
-     * Loads database credentials from a configuration file.
-     * These credentials include database user, password, URL, and connection limit.
+     * Carga las credenciales de la base de datos desde un archivo de configuración. Estas credenciales incluyen el usuario de la base de datos, la contraseña, la URL y el límite de conexiones.
      */
     public static void getDatabaseCredentials() {
-        ResourceBundle configFile;
-        configFile = ResourceBundle.getBundle("resources.config");
+        ResourceBundle configFile = ResourceBundle.getBundle("resources.config");
         username = configFile.getString("DB_USER");
         password = configFile.getString("DB_PASSWORD");
         url = configFile.getString("URL");
@@ -36,46 +27,53 @@ public class Pool {
     }
 
     /**
-     * Creates and configures the connection pool if it has not been initialized.
-     * Sets up parameters such as initial size, maximum idle connections, total connections, 
-     * and wait time.
-     * 
-     * @return a DataSource object representing the connection pool
+     * Inicializa el stack de conexiones y configura el pool si no está ya configurado. Crea las conexiones necesarias y las agrega al stack.
      */
-    public static DataSource getDataSource() {
-        if (ds == null) {
-            ds = new BasicDataSource();
-            ds.setDriverClassName("org.postgresql.Driver");
-            ds.setUsername(username);
-            ds.setPassword(password);
-            ds.setUrl(url);
-            ds.setInitialSize(1);
-            ds.setMaxIdle(10);
-            ds.setMaxTotal(userCap);
-            ds.setMaxWaitMillis(10000);
+    public static void initializePool() throws SQLException {
+        getDatabaseCredentials();
+
+        // Inicializa el stack con el número máximo de conexiones permitido
+        for (int i = 0; i < userCap; i++) {
+            Connection connection = DriverManager.getConnection(url, username, password);
+            connectionStack.push(connection);
         }
-        return ds;
     }
 
     /**
-     * Obtains a connection from the pool, which can be used for database operations.
-     * Throws a SQLException if no connections are available within the specified wait time.
-     * 
-     * @return a Connection object for database interaction
-     * @throws SQLException if a connection cannot be obtained
+     * Obtiene una conexión del stack. Si el stack está vacío, se espera que se libere una conexión.
+     *
+     * @return una conexión a la base de datos.
+     * @throws UserCapException si no se puede obtener una conexión.
      */
-    public static Connection getConexion() throws SQLException {
-        return getDataSource().getConnection();
+    public static synchronized Connection getConexion() throws UserCapException {
+        if (connectionStack.isEmpty()) {
+            throw new UserCapException("User cap reached, wait for a connection.");
+        }
+        return connectionStack.pop();
     }
 
     /**
-     * Closes the connection pool, releasing all database connections.
-     * 
-     * @throws SQLException if an error occurs while closing connections
+     * Libera una conexión y la devuelve al stack.
+     *
+     * @param connection la conexión que se devuelve al stack.
      */
-    public static void close() throws SQLException {
-        if (ds != null) {
-            ds.close();
+    public static synchronized void releaseConnection(Connection connection) {
+        if (connection != null && connectionStack.size() < userCap) {
+            connectionStack.push(connection);
+        }
+    }
+
+    /**
+     * Cierra todas las conexiones del pool.
+     *
+     * @throws SQLException si ocurre un error al cerrar las conexiones.
+     */
+    public static void closeAllConnections() throws SQLException {
+        while (!connectionStack.isEmpty()) {
+            Connection connection = connectionStack.pop();
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
         }
     }
 }

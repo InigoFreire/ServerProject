@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import message.Message;
@@ -17,11 +19,10 @@ import serverLogicTier.ServerApplication;
 import userLogicTier.model.User;
 
 /**
- * The WorkThread class handles communication between a client and server.
- * It processes client requests, interacts with the server to fetch results, and sends responses back to the client.
- * Each instance of WorkThread is associated with a client connection and operates as a separate thread.
- * 
+ * The WorkThread class handles communication between a client and server. It processes client requests, interacts with the server to fetch results, and sends responses back to the client. Each instance of WorkThread is associated with a client connection and operates as a separate thread.
+ *
  * This class includes logic for interpreting different client messages, handling sign-in and sign-up requests, and managing exceptions.
+ *
  * @see ServerApplication
  * @see MessageType
  * @see DAOFactory
@@ -36,7 +37,7 @@ public class WorkThread implements Runnable {
 
     /**
      * Initializes a new WorkThread instance with a client socket and server application reference.
-     * 
+     *
      * @param socketInput Socket received from the client side
      * @param serverApp Reference to the main server application
      */
@@ -46,13 +47,15 @@ public class WorkThread implements Runnable {
     }
 
     /**
-     * Default mehtod of a thread class.
-     * Receives the message from the client side, translates it so it can be interpreted and then sent to the server side.
-     * Then it receives the response from the server side and sends it back to the client.
+     * Default method of a thread class. Receives the message from the client side, translates it so it can be interpreted and then sent to the server side. Then it receives the response from the server side and sends it back to the client.
      */
     @Override
     public void run() {
+        Connection connection = null;
         try {
+            // Obtener una conexión del pool
+            connection = Pool.getConexion();
+
             reader = new ObjectInputStream(socket.getInputStream());
             writer = new ObjectOutputStream(socket.getOutputStream());
             logger.log(Level.INFO, "Reader & writer initialized");
@@ -67,7 +70,12 @@ public class WorkThread implements Runnable {
 
         } catch (IOException | ClassNotFoundException e) {
             logger.log(Level.SEVERE, "Client handling error", e);
+        } catch (UserCapException ex) {
+            logger.log(Level.SEVERE, "User cap reached", ex);
         } finally {
+            if (connection != null) {
+                Pool.releaseConnection(connection);
+            }
             try {
                 socket.close();
                 logger.log(Level.INFO, "Socket closed");
@@ -80,9 +88,8 @@ public class WorkThread implements Runnable {
     }
 
     /**
-     * Processes incoming client messages, interprets requests, and interacts with the database through DAO.
-     * Supports handling of sign-in and sign-up requests, with responses based on database operation results.
-     * 
+     * Processes incoming client messages, interprets requests, and interacts with the database through DAO. Supports handling of sign-in and sign-up requests, with responses based on database operation results.
+     *
      * @param message A message containing a client request
      * @return A message with the server response, indicating success or error
      */
